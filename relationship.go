@@ -22,6 +22,10 @@ func (r *Relationship) SetProperty(key string, value interface{}) {
 	r.Properties[key] = value
 }
 
+func (r *Relationship) RemoveProperty(key string) {
+	delete(r.Properties, key)
+}
+
 func (r *Relationship) GetProperty(key string) (interface{}, bool) {
 	value, exists := r.Properties[key]
 	return value, exists
