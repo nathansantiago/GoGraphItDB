@@ -1,5 +1,7 @@
 package main
 
+import "slices"
+
 type Graph struct {
 	ID string
 	Name string
@@ -20,21 +22,15 @@ func (g *Graph) GetNodeByID(k string) *Node {
 	return g.Nodes[k]
 }
 
-// Node Properties
-
-func GetNodeProperties
-
-func UpdateNodeProperties
-
-func DeleteNodeProperties
-
-func UpdateNodeProperty
-
-func DeleteNodeProperty
-
 // Relationships
+func (g *Graph) AddRelationship(r *Relationship) {
+	g.Relationships = append(g.Relationships, r)
+}
 
-// Relationship Properties
+func (g *Graph) RemoveRelationship(r *Relationship) {
+	idx := slices.Index(g.Relationships, r)
+	g.Relationships = 
+}
 
 // Node Degree
 
