@@ -3,15 +3,15 @@ package main
 import "slices"
 
 type Graph struct {
-	ID string
-	Name string
-	Nodes map[string]*Node
+	ID            string
+	Name          string
+	Nodes         map[string]*Node
 	Relationships []*Relationship
 }
 
 // Nodes
 func (g *Graph) AddNode(n *Node) {
-	g.Nodes = append(g.Nodes, n)
+	g.Nodes[n.ID] = n
 }
 
 func (g *Graph) RemoveNodeByID(k string) {
@@ -29,11 +29,29 @@ func (g *Graph) AddRelationship(r *Relationship) {
 
 func (g *Graph) RemoveRelationship(r *Relationship) {
 	idx := slices.Index(g.Relationships, r)
-	g.Relationships = 
+	if idx != -1 {
+		g.Relationships = append(g.Relationships[:idx], g.Relationships[idx+1:]...)
+	}
 }
 
 // Node Degree
+func (g *Graph) GetNodeDegree(nodeID string) int {
+	count := 0
+	for _, rel := range g.Relationships {
+		if rel.StartNode.ID == nodeID || rel.EndNode.ID == nodeID {
+			count++
+		}
+	}
+	return count
+}
 
 // Traversing
-
-// 
+func (g *Graph) GetNodeRelationships(nodeID string) []*Relationship {
+	var relationships []*Relationship
+	for _, rel := range g.Relationships {
+		if rel.StartNode.ID == nodeID || rel.EndNode.ID == nodeID {
+			relationships = append(relationships, rel)
+		}
+	}
+	return relationships
+}
