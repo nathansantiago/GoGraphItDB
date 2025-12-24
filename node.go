@@ -37,3 +37,11 @@ func (n *Node) GetProperty(key string) (interface{}, bool) {
 func (n *Node) RemoveProperty(key string) {
 	delete(n.Properties, key)
 }
+
+func (n *Node) GetLabels() []string {
+	return n.Labels
+}
+
+func (n *Node) HasLabel(label string) bool {
+	return slices.Contains(n.Labels, label)
+}
