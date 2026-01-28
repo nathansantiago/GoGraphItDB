@@ -6,6 +6,8 @@ import (
 
 // FindNodesByLabel returns all nodes that have the given label.
 func FindNodesByLabel(g *Graph, label string) []*Node {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
 	result := make([]*Node, 0)
 	for _, n := range g.Nodes {
 		if n.HasLabel(label) {
@@ -17,6 +19,8 @@ func FindNodesByLabel(g *Graph, label string) []*Node {
 
 // FindNodesByProperties returns all nodes that match the given property key/value.
 func FindNodesByProperties(g *Graph, key string, value interface{}) []*Node {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
 	result := make([]*Node, 0)
 	for _, n := range g.Nodes {
 		if v, ok := n.GetProperty(key); ok {
@@ -30,6 +34,8 @@ func FindNodesByProperties(g *Graph, key string, value interface{}) []*Node {
 
 // FindRelationshipByType returns all relationships that match the given type.
 func FindRelationshipByType(g *Graph, relationshipType string) []*Relationship {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
 	result := make([]*Relationship, 0)
 	for _, r := range g.Relationships {
 		if r.Type == relationshipType {
@@ -42,14 +48,17 @@ func FindRelationshipByType(g *Graph, relationshipType string) []*Relationship {
 // FindPath returns a path (as a list of nodes) from startID to endID using BFS.
 // If no path exists, returns nil.
 func FindPath(g *Graph, startID string, endID string) []*Node {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+
 	if startID == endID {
-		if start := g.GetNodeByID(startID); start != nil {
+		if start := g.Nodes[startID]; start != nil {
 			return []*Node{start}
 		}
 		return nil
 	}
 
-	if g.GetNodeByID(startID) == nil || g.GetNodeByID(endID) == nil {
+	if g.Nodes[startID] == nil || g.Nodes[endID] == nil {
 		return nil
 	}
 
@@ -62,7 +71,12 @@ func FindPath(g *Graph, startID string, endID string) []*Node {
 		current := queue[0]
 		queue = queue[1:]
 
-		for _, rel := range g.GetNodeRelationships(current) {
+		// Inline relationship lookup to avoid nested locking
+		for _, rel := range g.Relationships {
+			if rel.StartNode.ID != current && rel.EndNode.ID != current {
+				continue
+			}
+
 			var neighbor *Node
 			if rel.StartNode.ID == current {
 				neighbor = rel.EndNode
@@ -101,10 +115,10 @@ func reconstructPath(g *Graph, startID, endID string, prev map[string]string) []
 		pathIDs[i], pathIDs[j] = pathIDs[j], pathIDs[i]
 	}
 
-	// convert to nodes
+	// convert to nodes (already holding RLock from FindPath)
 	path := make([]*Node, 0, len(pathIDs))
 	for _, id := range pathIDs {
-		if n := g.GetNodeByID(id); n != nil {
+		if n := g.Nodes[id]; n != nil {
 			path = append(path, n)
 		} else {
 			// if a node is missing unexpectedly, abort
